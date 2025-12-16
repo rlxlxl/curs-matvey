@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: logistics_postgres
+    environment:
+      POSTGRES_DB: logistics_db
+      POSTGRES_USER: logistics_user
+      POSTGRES_PASSWORD: logistics_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistics_user -d logistics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: logistics_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: logistics_db
+      DB_USER: logistics_user
+      DB_PASSWORD: logistics_pass
+    volumes:
+      - ./frontend:/app/frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+

@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления логистическими перевозками</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .admin-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .admin-panel h2 {
+            color: #495057;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .shipments-container {
+            padding: 30px;
+        }
+
+        .shipments-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .shipments-header h2 {
+            color: #495057;
+        }
+
+        .shipments-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .shipments-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .shipments-table th,
+        .shipments-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .shipments-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .shipments-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-pending {
+            background: #ffc107;
+            color: #856404;
+        }
+
+        .status-в_пути {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .status-доставлено {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-ожидает {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚚 Система управления логистическими перевозками</h1>
+            <p>Безопасное программное обеспечение для управления перевозками</p>
+        </header>
+
+        <div class="admin-panel">
+            <h2>Панель администратора</h2>
+            <div id="alert-container"></div>
+            <form id="shipment-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Описание груза *</label>
+                        <input type="text" id="cargo_description" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Откуда *</label>
+                        <input type="text" id="origin" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Куда *</label>
+                        <input type="text" id="destination" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Вес (кг) *</label>
+                        <input type="number" id="weight_kg" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Объем (м³)</label>
+                        <input type="number" id="volume_m3" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Тип транспорта *</label>
+                        <select id="transport_type" required>
+                            <option value="">Выберите тип</option>
+                            <option value="Грузовик">Грузовик</option>
+                            <option value="Фура">Фура</option>
+                            <option value="Рефрижератор">Рефрижератор</option>
+                            <option value="Контейнер">Контейнер</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Статус *</label>
+                        <select id="status" required>
+                            <option value="pending">Ожидает</option>
+                            <option value="в_пути">В пути</option>
+                            <option value="доставлено">Доставлено</option>
+                            <option value="ожидает">Ожидает</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="submit-btn">Добавить перевозку</button>
+                <button type="button" class="btn btn-secondary" id="cancel-btn" style="display:none;">Отмена</button>
+            </form>
+        </div>
+
+        <div class="shipments-container">
+            <div class="shipments-header">
+                <h2>Список перевозок</h2>
+                <button class="btn btn-primary" onclick="loadShipments()">🔄 Обновить</button>
+            </div>
+            <div id="shipments-table-container">
+                <div class="loading">Загрузка данных...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal для редактирования -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Редактировать перевозку</h2>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>Описание груза *</label>
+                    <input type="text" id="edit-cargo_description" required>
+                </div>
+                <div class="form-group">
+                    <label>Откуда *</label>
+                    <input type="text" id="edit-origin" required>
+                </div>
+                <div class="form-group">
+                    <label>Куда *</label>
+                    <input type="text" id="edit-destination" required>
+                </div>
+                <div class="form-group">
+                    <label>Вес (кг) *</label>
+                    <input type="number" id="edit-weight_kg" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Объем (м³)</label>
+                    <input type="number" id="edit-volume_m3" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Тип транспорта *</label>
+                    <select id="edit-transport_type" required>
+                        <option value="Грузовик">Грузовик</option>
+                        <option value="Фура">Фура</option>
+                        <option value="Рефрижератор">Рефрижератор</option>
+                        <option value="Контейнер">Контейнер</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Статус *</label>
+                    <select id="edit-status" required>
+                        <option value="pending">Ожидает</option>
+                        <option value="в_пути">В пути</option>
+                        <option value="доставлено">Доставлено</option>
+                        <option value="ожидает">Ожидает</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Сохранить изменения</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Отмена</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let editingId = null;
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        function loadShipments() {
+            fetch('http://localhost:8080/api/shipments')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('shipments-table-container');
+                    if (data.shipments && data.shipments.length > 0) {
+                        let html = '<table class="shipments-table"><thead><tr>';
+                        html += '<th>ID</th><th>Груз</th><th>Откуда</th><th>Куда</th><th>Вес (кг)</th><th>Объем (м³)</th><th>Транспорт</th><th>Статус</th><th>Создано</th><th>Действия</th>';
+                        html += '</tr></thead><tbody>';
+                        
+                        data.shipments.forEach(shipment => {
+                            const statusClass = `status-${shipment.status}`;
+                            html += `<tr>
+                                <td>${shipment.id}</td>
+                                <td>${shipment.cargo_description}</td>
+                                <td>${shipment.origin}</td>
+                                <td>${shipment.destination}</td>
+                                <td>${shipment.weight_kg}</td>
+                                <td>${shipment.volume_m3 || '-'}</td>
+                                <td>${shipment.transport_type}</td>
+                                <td><span class="status-badge ${statusClass}">${shipment.status}</span></td>
+                                <td>${new Date(shipment.created_at).toLocaleString('ru-RU')}</td>
+                                <td class="action-buttons">
+                                    <button class="btn btn-success" onclick="editShipment(${shipment.id})">✏️ Редактировать</button>
+                                    <button class="btn btn-danger" onclick="deleteShipment(${shipment.id})">🗑️ Удалить</button>
+                                </td>
+                            </tr>`;
+                        });
+                        
+                        html += '</tbody></table>';
+                        container.innerHTML = html;
+                    } else {
+                        container.innerHTML = '<div class="loading">Нет данных о перевозках</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('shipments-table-container').innerHTML = 
+                        '<div class="loading">Ошибка загрузки данных</div>';
+                });
+        }
+
+        function editShipment(id) {
+            fetch(`http://localhost:8080/api/shipments`)
+                .then(response => response.json())
+                .then(data => {
+                    const shipment = data.shipments.find(s => s.id === id);
+                    if (shipment) {
+                        document.getElementById('edit-id').value = shipment.id;
+                        document.getElementById('edit-cargo_description').value = shipment.cargo_description;
+                        document.getElementById('edit-origin').value = shipment.origin;
+                        document.getElementById('edit-destination').value = shipment.destination;
+                        document.getElementById('edit-weight_kg').value = shipment.weight_kg;
+                        document.getElementById('edit-volume_m3').value = shipment.volume_m3 || '';
+                        document.getElementById('edit-transport_type').value = shipment.transport_type;
+                        document.getElementById('edit-status').value = shipment.status;
+                        editingId = id;
+                        document.getElementById('editModal').style.display = 'block';
+                    }
+                });
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editingId = null;
+        }
+
+        function deleteShipment(id) {
+            if (confirm('Вы уверены, что хотите удалить эту перевозку?')) {
+                fetch(`http://localhost:8080/api/shipments/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Перевозка успешно удалена', 'success');
+                        loadShipments();
+                    } else {
+                        showAlert('Ошибка при удалении: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                    }
+                })
+                .catch(error => {
+                    showAlert('Ошибка при удалении: ' + error.message, 'error');
+                });
+            }
+        }
+
+        document.getElementById('shipment-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new URLSearchParams();
+            formData.append('cargo_description', document.getElementById('cargo_description').value);
+            formData.append('origin', document.getElementById('origin').value);
+            formData.append('destination', document.getElementById('destination').value);
+            formData.append('weight_kg', document.getElementById('weight_kg').value);
+            formData.append('volume_m3', document.getElementById('volume_m3').value);
+            formData.append('transport_type', document.getElementById('transport_type').value);
+            formData.append('status', document.getElementById('status').value);
+
+            fetch('http://localhost:8080/api/shipments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Перевозка успешно добавлена', 'success');
+                    this.reset();
+                    loadShipments();
+                } else {
+                    showAlert('Ошибка при добавлении: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Ошибка при добавлении: ' + error.message, 'error');
+            });
+        });
+
+        document.getElementById('edit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit-id').value;
+            const formData = new URLSearchParams();
+            formData.append('cargo_description', document.getElementById('edit-cargo_description').value);
+            formData.append('origin', document.getElementById('edit-origin').value);
+            formData.append('destination', document.getElementById('edit-destination').value);
+            formData.append('weight_kg', document.getElementById('edit-weight_kg').value);
+            formData.append('volume_m3', document.getElementById('edit-volume_m3').value);
+            formData.append('transport_type', document.getElementById('edit-transport_type').value);
+            formData.append('status', document.getElementById('edit-status').value);
+
+            fetch(`http://localhost:8080/api/shipments/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Перевозка успешно обновлена', 'success');
+                    closeEditModal();
+                    loadShipments();
+                } else {
+                    showAlert('Ошибка при обновлении: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                }
+            })
+            .catch(error => {
+                showAlert('Ошибка при обновлении: ' + error.message, 'error');
+            });
+        });
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
+
+        // Загрузка данных при загрузке страницы
+        loadShipments();
+    </script>
+</body>
+</html>
+
